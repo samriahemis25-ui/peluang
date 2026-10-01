@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Peluang Kejadian Majemuk Saling Lepas - MA Gorontalo</title>
+    <!-- Tailwind CSS dari CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome untuk Ikon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Konfigurasi Tailwind Kustom -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        kemenag: {
+                            hijau: '#115E59', // Teal/Hijau gelap islami
+                            muda: '#D1FAE5', // Background hijau muda
+                            emas: '#D97706', // Emas/Amber gelap
+                            emasMuda: '#FDE68A' // Highlight emas
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Poppins', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #f0fdf4; /* Warna hijau sangat muda (Tailwind green-50) */
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23115e59' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            color: #1f2937;
+        }
+
+        .card {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.2s, box-shadow 0.2s;
+            border-top: 4px solid #115E59;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #115E59, #0F766E);
+            color: white;
+            transition: all 0.3s;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #0F766E, #0D9488);
+            transform: scale(1.05);
+            box-shadow: 0 4px 14px 0 rgba(17, 94, 89, 0.39);
+        }
+
+        .btn-emas {
+            background: linear-gradient(135deg, #D97706, #B45309);
+            color: white;
+            transition: all 0.3s;
+        }
+        
+        .btn-emas:hover {
+            background: linear-gradient(135deg, #B45309, #92400E);
+            transform: scale(1.05);
+            box-shadow: 0 4px 14px 0 rgba(217, 119, 6, 0.39);
+        }
+
+        .nav-button.active {
+            border-bottom: 3px solid #D97706;
+            color: #D97706;
+            font-weight: 600;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Styling untuk area simulasi */
+        .basket {
+            min-height: 150px;
+            border: 2px dashed #9CA3AF;
+            border-radius: 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 15px;
+            background-color: #F9FAFB;
+            align-content: flex-start;
+        }
+
+        .item-ikan {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .item-ikan.tuna { background-color: #60A5FA; color: white; } /* Biru */
+        .item-ikan.cakalang { background-color: #F87171; color: white; } /* Merah */
+        .item-ikan.bandeng { background-color: #A7F3D0; color: #065F46; } /* Hijau muda */
+
+        .item-ikan:hover {
+            transform: scale(1.1) rotate(5deg);
+        }
+        
+        .selected-item {
+            border: 3px solid #D97706;
+            transform: scale(1.1);
+        }
+
+        /* Quiz styling */
+        .option-btn {
+            width: 100%;
+            text-align: left;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            border: 2px solid #E5E7EB;
+            border-radius: 0.5rem;
+            background-color: white;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .option-btn:hover:not(:disabled) {
+            border-color: #115E59;
+            background-color: #F0FDF4;
+        }
+        .option-btn.correct {
+            background-color: #D1FAE5;
+            border-color: #059669;
+            color: #065F46;
+        }
+        .option-btn.wrong {
+            background-color: #FEE2E2;
+            border-color: #DC2626;
+            color: #991B1B;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Header Kemenag -->
+    <header class="bg-kemenag-hijau text-white shadow-md z-10 sticky top-0">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-kemenag-hijau">
+                    <i class="fa-solid fa-star-and-crescent text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg md:text-xl font-bold leading-tight">Matematika Fase F</h1>
+                    <p class="text-xs md:text-sm text-kemenag-muda">MA Wilayah Gorontalo</p>
+                </div>
+            </div>
+            <div class="hidden md:block text-right">
+                <span class="bg-kemenag-emas text-white text-xs font-bold px-2 py-1 rounded">Materi Peluang</span>
+            </div>
+        </div>
+        
+        <!-- Navigasi Tab -->
+        <nav class="bg-white text-gray-600 flex justify-center md:justify-start px-4 shadow-inner">
+            <div class="container mx-auto flex overflow-x-auto no-scrollbar">
+                <button onclick="showSection('intro')" id="btn-intro" class="nav-button active whitespace-nowrap px-4 py-3 text-sm md:text-base hover:text-kemenag-emas transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-compass"></i> Pengantar
+                </button>
+                <button onclick="showSection('materi')" id="btn-materi" class="nav-button whitespace-nowrap px-4 py-3 text-sm md:text-base hover:text-kemenag-emas transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-book-open"></i> Materi
+                </button>
+                <button onclick="showSection('eksplorasi')" id="btn-eksplorasi" class="nav-button whitespace-nowrap px-4 py-3 text-sm md:text-base hover:text-kemenag-emas transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-fish"></i> Eksplorasi Pesisir
+                </button>
+                <button onclick="showSection('evaluasi')" id="btn-evaluasi" class="nav-button whitespace-nowrap px-4 py-3 text-sm md:text-base hover:text-kemenag-emas transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-spell-check"></i> Kuis Evaluasi
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="flex-grow container mx-auto px-4 py-8 max-w-5xl">
+        
+        <!-- BAGIAN 1: PENGANTAR -->
+        <section id="intro" class="fade-in">
+            <div class="card p-6 md:p-10 mb-8 bg-gradient-to-br from-white to-green-50">
+                <div class="flex flex-col md:flex-row items-center gap-8">
+                    <div class="flex-1">
+                        <span class="text-kemenag-emas font-bold tracking-wider text-sm uppercase">Media Pembelajaran Interaktif</span>
+                        <h2 class="text-3xl md:text-4xl font-bold text-kemenag-hijau mt-2 mb-4">Peluang Kejadian Majemuk Saling Lepas</h2>
+                        <p class="text-gray-600 mb-4 leading-relaxed text-lg">
+                            Assalamu'alaikum wr. wb! Selamat datang di modul interaktif Matematika.
+                            Hari ini kita akan menjelajahi konsep peluang melalui konteks kehidupan pesisir dan pertanian di Gorontalo.
+                        </p>
+                        <div class="bg-yellow-50 border-l-4 border-kemenag-emas p-4 mb-6 rounded-r-lg">
+                            <h3 class="font-bold text-gray-800 flex items-center gap-2">
+                                <i class="fa-solid fa-bullseye text-kemenag-emas"></i> Tujuan Pembelajaran:
+                            </h3>
+                            <p class="text-sm text-gray-700 mt-1">
+                                Murid dapat menentukan nilai peluang kejadian majemuk saling lepas dengan tepat melalui penalaran dan eksplorasi.
+                            </p>
+                        </div>
+                        <button onclick="showSection('materi')" class="btn-primary px-6 py-3 rounded-full font-semibold inline-flex items-center gap-2 shadow-lg">
+                            Mulai Belajar <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
+                    <div class="hidden md:flex flex-1 justify-center relative">
+                        <div class="w-64 h-64 bg-blue-100 rounded-full flex flex-col items-center justify-center relative overflow-hidden border-8 border-white shadow-xl">
+                            <div class="absolute bottom-0 w-full h-1/2 bg-blue-400 opacity-50"></div>
+                            <div class="absolute bottom-1/4 right-0 w-32 h-16 bg-yellow-200 rounded-tl-full opacity-70"></div>
+                            <i class="fa-solid fa-sailboat text-6xl text-kemenag-emas z-10 animate-bounce" style="animation-duration: 3s;"></i>
+                            <i class="fa-solid fa-cloud text-3xl text-white absolute top-10 left-10 opacity-80"></i>
+                            <i class="fa-solid fa-sun text-4xl text-yellow-500 absolute top-8 right-8"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- BAGIAN 2: MATERI -->
+        <section id="materi" class="hidden fade-in">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-kemenag-hijau border-l-4 border-kemenag-emas pl-3">Ringkasan Materi</h2>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div class="card p-6">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-book text-kemenag-hijau"></i> Apa itu Kejadian Saling Lepas?
+                    </h3>
+                    <p class="text-gray-600 mb-4 text-justify">
+                        Dua kejadian dikatakan <strong>Saling Lepas</strong> jika kedua kejadian tersebut <strong>tidak mungkin terjadi secara bersamaan</strong>. Artinya, irisan dari kedua kejadian tersebut adalah himpunan kosong ($A \cap B = \emptyset$).
+                    </p>
+                    <div class="bg-gray-100 p-4 rounded-lg border border-gray-200">
+                        <p class="text-sm font-semibold text-gray-700">Contoh Kontekstual Gorontalo:</p>
+                        <p class="text-sm text-gray-600 mt-1 italic">
+                            "Saat nelayan memancing 1 ekor ikan, kejadian mendapat Ikan Tuna dan kejadian mendapat Ikan Cakalang adalah saling lepas. Karena tidak mungkin 1 ekor ikan adalah Tuna sekaligus Cakalang."
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card p-6">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-calculator text-kemenag-hijau"></i> Rumus Peluang
+                    </h3>
+                    <p class="text-gray-600 mb-3">
+                        Jika $A$ dan $B$ adalah dua kejadian saling lepas, maka peluang terjadinya kejadian $A$ <strong>ATAU</strong> $B$ dinotasikan dengan $P(A \cup B)$ adalah:
+                    </p>
+                    <div class="bg-kemenag-muda p-4 rounded-lg text-center my-4 border-2 border-kemenag-hijau">
+                        <p class="text-2xl font-bold text-kemenag-hijau font-serif">P(A &cup; B) = P(A) + P(B)</p>
+                    </div>
+                    <p class="text-sm text-gray-500">
+                        * Ingat kata kuncinya biasanya menggunakan konjungsi <strong>"atau"</strong>.
+                    </p>
+                </div>
+            </div>
+
+            <div class="card p-6 mb-8">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Langkah Penyelesaian</h3>
+                <div class="flex flex-col md:flex-row gap-4">
+                    <div class="flex-1 bg-white border border-gray-200 p-4 rounded-lg relative overflow-hidden">
+                        <h4 class="font-semibold text-gray-800 mb-2">1. Hitung Ruang Sampel (n(S))</h4>
+                        <p class="text-sm text-gray-600">Tentukan total semua kemungkinan yang bisa terjadi dari percobaan tersebut.</p>
+                    </div>
+                    <div class="flex-1 bg-white border border-gray-200 p-4 rounded-lg relative overflow-hidden">
+                        <h4 class="font-semibold text-gray-800 mb-2">2. Hitung Titik Sampel A & B</h4>
+                        <p class="text-sm text-gray-600">Tentukan banyak kejadian A (n(A)) dan banyak kejadian B (n(B)).</p>
+                    </div>
+                    <div class="flex-1 bg-white border border-gray-200 p-4 rounded-lg relative overflow-hidden">
+                        <h4 class="font-semibold text-gray-800 mb-2">3. Jumlahkan Peluang</h4>
+                        <p class="text-sm text-gray-600">Gunakan rumus $P(X) = \frac{n(X)}{n(S)}$. Lalu jumlahkan $P(A) + P(B)$.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center">
+                <button onclick="showSection('eksplorasi')" class="btn-primary px-6 py-2 rounded-full font-semibold shadow-md">
+                    Lanjut ke Eksplorasi <i class="fa-solid fa-arrow-right ml-1"></i>
+                </button>
+            </div>
+        </section>
+
+        <!-- BAGIAN 3: EKSPLORASI INTERAKTIF -->
+        <section id="eksplorasi" class="hidden fade-in">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-kemenag-hijau border-l-4 border-kemenag-emas pl-3 mb-2">Eksplorasi Tangkapan Nelayan Gorontalo</h2>
+                <p class="text-gray-600">Pak Budi, nelayan di pesisir Teluk Tomini, pulang membawa tangkapan ikan. Mari kita simulasikan pengambilan ikan secara acak dari keranjangnya.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="card p-6 lg:col-span-1">
+                    <h3 class="font-bold text-gray-800 mb-4 border-b pb-2">Atur Isi Keranjang</h3>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1 flex justify-between">
+                            <span><i class="fa-solid fa-fish text-blue-500"></i> Ikan Tuna</span>
+                            <span id="val-tuna" class="font-bold">5</span>
+                        </label>
+                        <input type="range" id="slider-tuna" min="1" max="10" value="5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-500" oninput="updateBasket()">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1 flex justify-between">
+                            <span><i class="fa-solid fa-fish text-red-400"></i> Ikan Cakalang</span>
+                            <span id="val-cakalang" class="font-bold">3</span>
+                        </label>
+                        <input type="range" id="slider-cakalang" min="1" max="10" value="3" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-red-400" oninput="updateBasket()">
+                    </div>
+
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-1 flex justify-between">
+                            <span><i class="fa-solid fa-fish text-green-500"></i> Ikan Bandeng</span>
+                            <span id="val-bandeng" class="font-bold">2</span>
+                        </label>
+                        <input type="range" id="slider-bandeng" min="1" max="10" value="2" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-green-500" oninput="updateBasket()">
+                    </div>
+
+                    <div class="bg-gray-50 p-3 rounded text-center mb-4 border">
+                        <span class="text-sm text-gray-500">Total Ikan n(S) =</span>
+                        <span id="total-ikan" class="text-xl font-bold text-kemenag-hijau ml-2">10</span>
+                    </div>
+
+                    <button onclick="ambilAcak()" class="btn-emas w-full py-3 rounded-lg font-bold shadow-md flex justify-center items-center gap-2">
+                        <i class="fa-solid fa-hand-sparkles"></i> Ambil 1 Ikan Acak
+                    </button>
+                </div>
+
+                <div class="lg:col-span-2 flex flex-col gap-6">
+                    <div class="card p-6 flex-grow">
+                        <h3 class="font-bold text-gray-800 mb-2">Keranjang Pak Budi</h3>
+                        <p class="text-xs text-gray-500 mb-4">Ikon mewakili ikan di dalam keranjang.</p>
+                        <div id="basket-container" class="basket"></div>
+                    </div>
+
+                    <div class="card p-6 bg-kemenag-hijau text-white">
+                        <h3 class="font-bold text-kemenag-emasMuda mb-4 border-b border-white/20 pb-2">Analisis Peluang Saling Lepas</h3>
+                        
+                        <div class="mb-4">
+                            <p class="text-sm font-light mb-2">Berapa peluang terambilnya <strong class="text-blue-300">Tuna</strong> ATAU <strong class="text-red-300">Cakalang</strong>?</p>
+                            
+                            <div class="grid grid-cols-3 gap-2 text-center text-sm bg-black/20 p-3 rounded-lg">
+                                <div>
+                                    <span class="block text-xs opacity-75">P(Tuna)</span>
+                                    <span id="calc-ptuna" class="font-mono text-lg font-bold">5/10</span>
+                                </div>
+                                <div class="flex items-center justify-center text-xl font-bold">+</div>
+                                <div>
+                                    <span class="block text-xs opacity-75">P(Cakalang)</span>
+                                    <span id="calc-pcakalang" class="font-mono text-lg font-bold">3/10</span>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-3 text-center bg-white/10 py-2 rounded">
+                                <span class="text-sm">P(Tuna &cup; Cakalang) = </span>
+                                <span id="calc-hasil" class="font-mono text-xl font-bold text-kemenag-emasMuda">8/10</span>
+                                <span id="calc-sederhana" class="font-mono text-lg ml-2">(4/5)</span>
+                            </div>
+                        </div>
+
+                        <div id="sim-feedback" class="hidden bg-white text-gray-800 p-4 rounded-lg mt-4 text-sm relative">
+                            <button onclick="document.getElementById('sim-feedback').classList.add('hidden')" class="absolute top-2 right-2 text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+                            <div class="flex items-start gap-3">
+                                <div id="sim-icon" class="text-2xl mt-1"></div>
+                                <div>
+                                    <p id="sim-text" class="font-semibold"></p>
+                                    <p class="text-gray-600 mt-1 text-xs">Peluang ikan jenis ini terpilih tadi adalah <span id="sim-prob" class="font-bold text-kemenag-hijau"></span>.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-right mt-6">
+                <button onclick="showSection('evaluasi')" class="btn-primary px-6 py-2 rounded-full font-semibold shadow-md">
+                    Uji Pemahaman <i class="fa-solid fa-check-double ml-1"></i>
+                </button>
+            </div>
+        </section>
+
+        <!-- BAGIAN 4: KUIS EVALUASI -->
+        <section id="evaluasi" class="hidden fade-in">
+             <div class="mb-6">
+                <h2 class="text-2xl font-bold text-kemenag-hijau border-l-4 border-kemenag-emas pl-3 mb-2">Kuis Evaluasi Formatif</h2>
+                <p class="text-gray-600">Kerjakan 5 soal berikut untuk menguji pemahamanmu. Pilih jawaban yang paling tepat.</p>
+            </div>
+
+            <div id="quiz-container" class="card p-6 md:p-8 max-w-3xl mx-auto">
+                <div class="mb-6 flex justify-between items-center text-sm font-semibold text-gray-500">
+                    <span id="quiz-progress">Soal 1 dari 5</span>
+                    <span class="bg-kemenag-muda text-kemenag-hijau px-3 py-1 rounded-full">Skor: <span id="quiz-score-display">0</span></span>
+                </div>
+                
+                <div class="w-full bg-gray-200 rounded-full h-2.5 mb-6">
+                  <div id="quiz-progress-bar" class="bg-kemenag-emas h-2.5 rounded-full transition-all duration-300" style="width: 20%"></div>
+                </div>
+
+                <div id="question-area">
+                    <h3 id="question-text" class="text-lg font-medium text-gray-800 mb-6 leading-relaxed"></h3>
+                    <div id="options-area" class="flex flex-col gap-2"></div>
+                </div>
+
+                <div id="feedback-area" class="hidden mt-6 p-4 rounded-lg border-l-4">
+                    <h4 id="feedback-title" class="font-bold mb-1 flex items-center gap-2"></h4>
+                    <p id="feedback-text" class="text-sm text-gray-700"></p>
+                    <button id="btn-next-question" onclick="nextQuestion()" class="mt-4 btn-primary px-4 py-2 rounded text-sm font-semibold shadow hidden">
+                        Soal Selanjutnya <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                    <button id="btn-finish-quiz" onclick="finishQuiz()" class="mt-4 btn-emas px-4 py-2 rounded text-sm font-semibold shadow hidden">
+                        Lihat Hasil Akhir <i class="fa-solid fa-flag-checkered"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div id="quiz-result" class="hidden card p-8 max-w-3xl mx-auto text-center">
+                <div class="inline-block w-24 h-24 bg-kemenag-muda rounded-full flex items-center justify-center mb-4 mx-auto">
+                    <i id="result-icon" class="fa-solid fa-trophy text-5xl text-kemenag-emas"></i>
+                </div>
+                <h2 class="text-3xl font-bold text-gray-800 mb-2">Kuis Selesai!</h2>
+                <p id="result-message" class="text-gray-600 mb-6">Kamu telah menyelesaikan latihan soal Peluang.</p>
+                
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-6">
+                    <span class="block text-sm text-gray-500 uppercase font-bold tracking-wide">Nilai Akhir</span>
+                    <span id="final-score" class="text-6xl font-bold text-kemenag-hijau block mt-2">100</span>
+                </div>
+
+                <!-- Form Database Kirim ke Google Apps Script -->
+                <div id="form-container" class="bg-white border-2 border-kemenag-muda p-6 rounded-xl mb-6 text-left shadow-inner">
+                    <h3 class="font-bold text-gray-800 mb-4 border-b pb-2"><i class="fa-solid fa-cloud-arrow-up text-kemenag-hijau mr-2"></i>Simpan Nilai ke Database</h3>
+                    <form id="form-simpan-nilai">
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
+                            <input type="text" id="input-nama" name="nama" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-kemenag-hijau" placeholder="Masukkan nama Anda">
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Kelas</label>
+                            <select id="input-kelas" name="kelas" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-kemenag-hijau">
+                                <option value="" disabled selected>Pilih Kelas</option>
+                                <option value="XII MIPA 1">XII MIPA 1</option>
+                                <option value="XII MIPA 2">XII MIPA 2</option>
+                                <option value="XII IPS 1">XII IPS 1</option>
+                                <option value="XII Agama">XII Agama</option>
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Pesan / Kesan Belajar (Opsional)</label>
+                            <textarea id="input-pesan" name="pesan" rows="2" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-kemenag-hijau" placeholder="Bagaimana menurutmu kuis ini?"></textarea>
+                        </div>
+                        <button type="submit" id="btn-submit" class="w-full bg-kemenag-hijau hover:bg-teal-700 text-white font-bold py-3 px-4 rounded-lg transition-colors flex justify-center items-center gap-2">
+                            <span>Simpan Nilai Saya</span> <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </form>
+                    
+                    <div id="loading-state" class="hidden text-center py-4">
+                        <i class="fa-solid fa-spinner fa-spin text-3xl text-kemenag-emas mb-2"></i>
+                        <p class="text-sm text-gray-600">Menyimpan data ke server spreadsheet...</p>
+                    </div>
+
+                    <div id="response-message" class="hidden mt-4 p-3 rounded-lg text-sm text-center font-medium"></div>
+                </div>
+
+                <button onclick="resetQuiz()" class="btn-primary px-6 py-2 rounded-full font-semibold shadow-md inline-flex items-center gap-2">
+                    <i class="fa-solid fa-rotate-right"></i> Coba Lagi Kuis
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-gray-400 py-6 text-center text-sm">
+        <p>&copy; 2026 MGMP Matematika MA - Kanwil Kemenag Prov. Gorontalo.</p>
+        <p class="mt-1 text-xs">Modul Pembelajaran Interaktif Mandiri (HTML5/CSS3/JS)</p>
+    </footer>
+
+    <script>
+        // --- NAVIGASI ---
+        function showSection(sectionId) {
+            document.querySelectorAll('main > section').forEach(sec => {
+                sec.classList.add('hidden');
+                sec.classList.remove('fade-in');
+            });
+            document.querySelectorAll('.nav-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            const targetSection = document.getElementById(sectionId);
+            targetSection.classList.remove('hidden');
+            void targetSection.offsetWidth; 
+            targetSection.classList.add('fade-in');
+            document.getElementById('btn-' + sectionId).classList.add('active');
+
+            if(sectionId === 'eksplorasi') {
+                updateBasket();
+            }
+        }
+
+        // --- SIMULASI EKSPLORASI ---
+        let basketItems = [];
+
+        function updateBasket() {
+            const numTuna = parseInt(document.getElementById('slider-tuna').value);
+            const numCakalang = parseInt(document.getElementById('slider-cakalang').value);
+            const numBandeng = parseInt(document.getElementById('slider-bandeng').value);
+
+            document.getElementById('val-tuna').innerText = numTuna;
+            document.getElementById('val-cakalang').innerText = numCakalang;
+            document.getElementById('val-bandeng').innerText = numBandeng;
+
+            const total = numTuna + numCakalang + numBandeng;
+            document.getElementById('total-ikan').innerText = total;
+
+            const container = document.getElementById('basket-container');
+            container.innerHTML = '';
+            basketItems = [];
+
+            const addItem = (type, count, icon, title) => {
+                for(let i=0; i<count; i++) {
+                    const div = document.createElement('div');
+                    div.className = `item-ikan ${type}`;
+                    div.innerHTML = `<i class="${icon}"></i>`;
+                    div.title = title;
+                    container.appendChild(div);
+                    basketItems.push({ type, div });
+                }
+            };
+
+            addItem('tuna', numTuna, 'fa-solid fa-fish', 'Ikan Tuna');
+            addItem('cakalang', numCakalang, 'fa-solid fa-fish', 'Ikan Cakalang');
+            addItem('bandeng', numBandeng, 'fa-solid fa-fish-fins', 'Ikan Bandeng');
+
+            document.getElementById('calc-ptuna').innerText = `${numTuna}/${total}`;
+            document.getElementById('calc-pcakalang').innerText = `${numCakalang}/${total}`;
+            
+            const numGabungan = numTuna + numCakalang;
+            document.getElementById('calc-hasil').innerText = `${numGabungan}/${total}`;
+            
+            const fpb = gcd(numGabungan, total);
+            if(fpb > 1 && total !== numGabungan && numGabungan !== 0) {
+                document.getElementById('calc-sederhana').innerText = `(${numGabungan/fpb}/${total/fpb})`;
+            } else {
+                document.getElementById('calc-sederhana').innerText = "";
+            }
+
+            document.getElementById('sim-feedback').classList.add('hidden');
+        }
+
+        function gcd(a, b) {
+            return b === 0 ? a : gcd(b, a % b);
+        }
+
+        function ambilAcak() {
+            if(basketItems.length === 0) return;
+            basketItems.forEach(item => item.div.classList.remove('selected-item', 'animate-bounce'));
+
+            const randomIndex = Math.floor(Math.random() * basketItems.length);
+            const selectedItem = basketItems[randomIndex];
+            selectedItem.div.classList.add('selected-item', 'animate-bounce');
+
+            const feedback = document.getElementById('sim-feedback');
+            const simText = document.getElementById('sim-text');
+            const simProb = document.getElementById('sim-prob');
+            const simIcon = document.getElementById('sim-icon');
+            
+            const total = basketItems.length;
+            let count = 0, nama = "", warnaText = "";
+
+            if (selectedItem.type === 'tuna') {
+                count = parseInt(document.getElementById('slider-tuna').value);
+                nama = "Ikan Tuna"; warnaText = "text-blue-500";
+                simIcon.innerHTML = `<i class="fa-solid fa-fish text-blue-500"></i>`;
+            } else if (selectedItem.type === 'cakalang') {
+                count = parseInt(document.getElementById('slider-cakalang').value);
+                nama = "Ikan Cakalang"; warnaText = "text-red-400";
+                simIcon.innerHTML = `<i class="fa-solid fa-fish text-red-400"></i>`;
+            } else {
+                count = parseInt(document.getElementById('slider-bandeng').value);
+                nama = "Ikan Bandeng"; warnaText = "text-green-500";
+                simIcon.innerHTML = `<i class="fa-solid fa-fish-fins text-green-500"></i>`;
+            }
+
+            simText.innerHTML = `Terambil: <strong class="${warnaText}">${nama}</strong>`;
+            simProb.innerText = `${count}/${total}`;
+            feedback.classList.remove('hidden');
+            feedback.classList.add('fade-in');
+        }
+
+        // --- BANK SOAL KUIS ---
+        const quizData = [
+            {
+                question: "Dalam sebuah kotak di KUD (Koperasi Unit Desa) pertanian, terdapat 5 bibit jagung, 4 bibit kedelai, dan 3 bibit kacang tanah. Jika diambil satu bibit secara acak, berapakah peluang terambilnya bibit jagung atau kedelai?",
+                options: ["9/12", "5/12", "4/12", "1/12", "12/12"],
+                correct: 0,
+                explanation: "n(S) = 5+4+3 = 12. P(Jagung) = 5/12. P(Kedelai) = 4/12. Karena tidak mungkin satu bibit adalah jagung sekaligus kedelai (Saling Lepas), maka P(Jagung U Kedelai) = 5/12 + 4/12 = 9/12."
+            },
+            {
+                question: "Sebuah dadu setimbang dilempar satu kali. Peluang munculnya mata dadu ganjil ATAU mata dadu genap adalah...",
+                options: ["1/6", "3/6", "5/6", "1", "0"],
+                correct: 3,
+                explanation: "n(S) = 6. Mata ganjil (1,3,5) n=3. Mata genap (2,4,6) n=3. Keduanya saling lepas. P(Ganjil U Genap) = 3/6 + 3/6 = 6/6 = 1. Ini adalah kejadian pasti."
+            },
+            {
+                question: "Di TPI (Tempat Pelelangan Ikan) Kwandang, terdapat 10 keranjang ikan. 3 keranjang berisi ikan layang, 5 keranjang cakalang, dan 2 keranjang tongkol. Berapa peluang pembeli memilih acak keranjang berisi ikan layang atau tongkol?",
+                options: ["3/10", "5/10", "7/10", "2/10", "1/2"],
+                correct: 1,
+                explanation: "P(Layang) = 3/10. P(Tongkol) = 2/10. P(Layang U Tongkol) = 3/10 + 2/10 = 5/10 = 1/2."
+            },
+            {
+                question: "Dari 1 set kartu remi (52 kartu) tanpa joker, diambil 1 kartu secara acak. Berapakah peluang terambil kartu As atau kartu King?",
+                options: ["4/52", "8/52", "1/52", "13/52", "26/52"],
+                correct: 1,
+                explanation: "n(S) = 52. Ada 4 kartu As dan 4 kartu King. Sebuah kartu tidak mungkin As sekaligus King. P(As U King) = P(As) + P(King) = 4/52 + 4/52 = 8/52."
+            },
+            {
+                question: "Suatu survei dilakukan pada 20 petani di Bone Bolango. 8 orang menanam jagung saja, 7 orang menanam padi saja, dan sisanya menanam cabai saja. Jika dipilih 1 orang acak, peluang terpilih petani jagung atau cabai adalah...",
+                options: ["15/20", "13/20", "12/20", "5/20", "8/20"],
+                correct: 1,
+                explanation: "Total = 20. Jagung = 8, Padi = 7. Cabai = 20 - (8+7) = 5. P(Jagung U Cabai) = P(Jagung) + P(Cabai) = 8/20 + 5/20 = 13/20."
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let isAnswered = false;
+        let userAnswers = []; 
+        let benarCount = 0;   
+        let salahCount = 0;   
+
+        function loadQuestion() {
+            isAnswered = false;
+            const q = quizData[currentQuestion];
+            
+            document.getElementById('question-text').innerText = `${currentQuestion + 1}. ${q.question}`;
+            document.getElementById('quiz-progress').innerText = `Soal ${currentQuestion + 1} dari ${quizData.length}`;
+            document.getElementById('quiz-progress-bar').style.width = `${((currentQuestion + 1) / quizData.length) * 100}%`;
+            
+            document.getElementById('feedback-area').classList.add('hidden');
+            document.getElementById('btn-next-question').classList.add('hidden');
+            document.getElementById('btn-finish-quiz').classList.add('hidden');
+
+            const optionsArea = document.getElementById('options-area');
+            optionsArea.innerHTML = '';
+            
+            q.options.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-btn font-medium';
+                const label = String.fromCharCode(65 + index); 
+                btn.innerHTML = `<span class="inline-block w-8 font-bold text-gray-500">${label}.</span> ${opt}`;
+                btn.onclick = () => checkAnswer(index, btn);
+                optionsArea.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(selectedIndex, btnElement) {
+            if (isAnswered) return;
+            isAnswered = true;
+
+            const q = quizData[currentQuestion];
+            const isCorrect = selectedIndex === q.correct;
+            
+            const labelJawaban = String.fromCharCode(65 + selectedIndex);
+            userAnswers.push(`${labelJawaban}. ${q.options[selectedIndex]}`);
+
+            const allBtns = document.querySelectorAll('.option-btn');
+            allBtns.forEach(btn => {
+                btn.disabled = true;
+                btn.style.cursor = 'not-allowed';
+            });
+
+            if (isCorrect) {
+                btnElement.classList.add('correct');
+                score += 20;
+                benarCount++;
+                document.getElementById('quiz-score-display').innerText = score;
+                showFeedback('Benar! MasyaAllah, tepat sekali.', 'text-green-600', 'border-green-500', 'bg-green-50', 'fa-check-circle', q.explanation);
+            } else {
+                btnElement.classList.add('wrong');
+                salahCount++;
+                allBtns[q.correct].classList.add('correct');
+                showFeedback('Kurang Tepat.', 'text-red-600', 'border-red-500', 'bg-red-50', 'fa-times-circle', q.explanation);
+            }
+
+            if (currentQuestion < quizData.length - 1) {
+                document.getElementById('btn-next-question').classList.remove('hidden');
+            } else {
+                document.getElementById('btn-finish-quiz').classList.remove('hidden');
+            }
+        }
+
+        function showFeedback(title, titleColor, borderColor, bgColor, iconClass, explanationText) {
+            const fb = document.getElementById('feedback-area');
+            fb.className = `mt-6 p-4 rounded-lg border-l-4 ${borderColor} ${bgColor} fade-in block`;
+            
+            document.getElementById('feedback-title').className = `font-bold mb-2 flex items-center gap-2 ${titleColor}`;
+            document.getElementById('feedback-title').innerHTML = `<i class="fa-solid ${iconClass}"></i> ${title}`;
+            document.getElementById('feedback-text').innerHTML = `<strong>Pembahasan:</strong><br>${explanationText}`;
+        }
+
+        function nextQuestion() {
+            currentQuestion++;
+            loadQuestion();
+        }
+
+        function finishQuiz() {
+            document.getElementById('quiz-container').classList.add('hidden');
+            const resultDiv = document.getElementById('quiz-result');
+            resultDiv.classList.remove('hidden');
+            resultDiv.classList.add('fade-in');
+            
+            document.getElementById('final-score').innerText = score;
+            const msgEl = document.getElementById('result-message');
+            const iconEl = document.getElementById('result-icon');
+            
+            if (score >= 80) {
+                msgEl.innerText = "Alhamdulillah! Pemahamanmu sangat luar biasa. Pertahankan prestasimu!";
+                iconEl.className = "fa-solid fa-crown text-5xl text-yellow-500 animate-bounce";
+            } else if (score >= 60) {
+                msgEl.innerText = "Cukup baik, namun masih perlu sedikit latihan lagi agar lebih maksimal.";
+                iconEl.className = "fa-solid fa-thumbs-up text-5xl text-blue-500";
+            } else {
+                msgEl.innerText = "Jangan menyerah! Ayo baca ulang materinya dan coba lagi. InsyaAllah bisa.";
+                iconEl.className = "fa-solid fa-book-open-reader text-5xl text-gray-500";
+            }
+
+            resetForm();
+        }
+
+        // --- INTEGRASI GOOGLE APPS SCRIPT DATABASE ---
+        // URL BARU DARI ANDA:
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbwKo484Ef9ylnY3madcLjCArSnR_7XFax59xro08pAaVlaMs9NzuBuiV8eKG2qFXitt/exec'; 
+        
+        const form = document.getElementById('form-simpan-nilai');
+        const loadingState = document.getElementById('loading-state');
+        const responseMessage = document.getElementById('response-message');
+
+        form.addEventListener('submit', e => {
+            e.preventDefault();
+            
+            form.style.display = 'none';
+            loadingState.classList.remove('hidden');
+            responseMessage.classList.add('hidden');
+
+            const namaSiswa = document.getElementById('input-nama').value;
+            const kelasSiswa = document.getElementById('input-kelas').value;
+            const pesanSiswa = document.getElementById('input-pesan').value;
+            
+            const dataPetaSoal = quizData.map(q => {
+                return {
+                    question: q.question,
+                    options: q.options,
+                    correctOption: String.fromCharCode(65 + q.correct) + ". " + q.options[q.correct]
+                }
+            });
+
+            const payload = {
+                nama: namaSiswa,
+                kelas: kelasSiswa,
+                pesan: pesanSiswa,
+                benar: benarCount,
+                salah: salahCount,
+                nilai: score,
+                jawabanSiswa: userAnswers,
+                dataSoal: dataPetaSoal
+            };
+
+            fetch(scriptURL, { 
+                method: 'POST', 
+                body: JSON.stringify(payload),
+                headers: {
+                    'Content-Type': 'text/plain;charset=utf-8'
+                }
+            })
+                .then(response => response.json())
+                .then(result => {
+                    loadingState.classList.add('hidden');
+                    if (result.status === 'success') {
+                        showResponseMessage('Alhamdulillah, Analisis Nilai berhasil disimpan ke server Madrasah!', true);
+                    } else {
+                        throw new Error(result.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error!', error.message);
+                    loadingState.classList.add('hidden');
+                    showResponseMessage('Gagal menghubungi server. Harap periksa jaringan internet Anda.', false);
+                    form.style.display = 'block';
+                });
+        });
+
+        function showResponseMessage(msg, isSuccess) {
+            responseMessage.innerText = msg;
+            responseMessage.classList.remove('hidden', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800');
+            
+            if(isSuccess) {
+                responseMessage.classList.add('bg-green-100', 'text-green-800', 'border', 'border-green-300');
+            } else {
+                responseMessage.classList.add('bg-red-100', 'text-red-800', 'border', 'border-red-300');
+            }
+        }
+
+        function resetForm() {
+            form.reset();
+            form.style.display = 'block';
+            loadingState.classList.add('hidden');
+            responseMessage.classList.add('hidden');
+        }
+
+        function resetQuiz() {
+            currentQuestion = 0;
+            score = 0;
+            userAnswers = [];
+            benarCount = 0;
+            salahCount = 0;
+            document.getElementById('quiz-score-display').innerText = score;
+            document.getElementById('quiz-result').classList.add('hidden');
+            document.getElementById('quiz-container').classList.remove('hidden');
+            loadQuestion();
+        }
+
+        window.onload = function() {
+            loadQuestion();
+        };
+    </script>
+</body>
+</html>
